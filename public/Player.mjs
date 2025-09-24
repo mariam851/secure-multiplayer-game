@@ -1,5 +1,6 @@
 class Player {
   constructor({x, y, score, id}) {
+    
 
   }
 

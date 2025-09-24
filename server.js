@@ -7,6 +7,7 @@ const cors = require('cors');
 
 const fccTestingRoutes = require('./routes/fcctesting.js');
 const runner = require('./test-runner.js');
+const helmet = require('helmet');
 
 const app = express();
 
@@ -18,6 +19,30 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 //For FCC testing purposes and enables user to connect from outside the hosting platform
 app.use(cors({origin: '*'})); 
+
+
+// 24 - 45التغير
+app.use(helmet.noCache());
+
+app.use((req, res, next) => {
+  res.setHeader('X-Password-By', 'Real Time Multiplayers Game');
+  next();
+})
+
+app.get('/', (req, res) => {
+    res.send("This is a secure world!");
+});
+
+app.use(helmet, helmet.contentSecurityPolicy({
+  directives:{
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'", "trusted.com"],
+    objectSrc: [["'none'"]],
+    upgradeInsecureRequests: [],
+  },
+}))
+
+// 24 - 45التغير 
 
 // Index page (static HTML)
 app.route('/')
