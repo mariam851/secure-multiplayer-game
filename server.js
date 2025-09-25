@@ -4,12 +4,16 @@ const bodyParser = require('body-parser');
 const expect = require('chai');
 const socket = require('socket.io');
 const cors = require('cors');
+const helmet = require('helmet');
+const http = require('http'); // <-- هنا
 
 const fccTestingRoutes = require('./routes/fcctesting.js');
 const runner = require('./test-runner.js');
-const helmet = require('helmet');
 
 const app = express();
+const server = http.createServer(app);  // استخدم http
+const io = socket(server);
+
 
 app.use('/public', express.static(process.cwd() + '/public'));
 app.use('/assets', express.static(process.cwd() + '/assets'));
@@ -20,29 +24,19 @@ app.use(bodyParser.urlencoded({ extended: true }));
 //For FCC testing purposes and enables user to connect from outside the hosting platform
 app.use(cors({origin: '*'})); 
 
+app.use(helmet.noSniff());
 
-// 24 - 45التغير
+app.use(helmet.xssFilter());
+
 app.use(helmet.noCache());
 
-app.use((req, res, next) => {
-  res.setHeader('X-Password-By', 'Real Time Multiplayers Game');
-  next();
-})
+app.use(helmet.hidePoweredBy());
 
-app.get('/', (req, res) => {
-    res.send("This is a secure world!");
+app.use((req, res, next)=>{
+  res.setHeader('X-Powered-By', 'PHP 7.4.3');
+  next();
 });
 
-app.use(helmet, helmet.contentSecurityPolicy({
-  directives:{
-    defaultSrc: ["'self'"],
-    scriptSrc: ["'self'", "trusted.com"],
-    objectSrc: [["'none'"]],
-    upgradeInsecureRequests: [],
-  },
-}))
-
-// 24 - 45التغير 
 
 // Index page (static HTML)
 app.route('/')
@@ -61,13 +55,11 @@ app.use(function(req, res, next) {
 });
 
 const portNum = process.env.PORT || 3000;
-
-// Set up server and tests
-const server = app.listen(portNum, () => {
+server.listen(portNum, () => {  // <-- استخدم server.listen
   console.log(`Listening on port ${portNum}`);
-  if (process.env.NODE_ENV==='test') {
+  if (process.env.NODE_ENV === 'test') {
     console.log('Running Tests...');
-    setTimeout(function () {
+    setTimeout(() => {
       try {
         runner.run();
       } catch (error) {
